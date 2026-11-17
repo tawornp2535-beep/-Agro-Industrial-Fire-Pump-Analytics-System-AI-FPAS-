@@ -4763,7 +4763,7 @@
     <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin-bottom:16px;">
       <div style="background:rgba(0,119,255,0.15);border:1px solid var(--accent-cyan);border-radius:10px;padding:10px;text-align:center;">
         <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;">ชั่วโมงรวมสะสมของปั๊ม</div>
-        <div style="font-size:1.4rem;font-weight:800;color:var(--accent-cyan);margin:3px 0;" id="modalPumpTotal">90:30</div>
+        <div style="font-size:1.4rem;font-weight:800;color:var(--accent-cyan);margin:3px 0;" id="modalPumpTotal">89:50</div>
         <div style="font-size:0.62rem;color:var(--text-secondary)">Pump Total Hours</div>
       </div>
 
@@ -4964,7 +4964,7 @@ const DEFAULT_LOG_SUMMARY = {
   b2_ac: "233 V~",
   pressure: "153 psi",
   mode: "Auto",
-  pump_total: "90:30",
+  pump_total: "89:50",
   pump_last: "0:09",
   controller_hours: "99999:59",
   last_start: "12-11-2026 11:12:32"
@@ -5025,12 +5025,18 @@ function parseFiretrolLogText(text) {
   });
 
   if (events.length > 0) {
-    meta.pressure = `${events[events.length - 1].psi} psi`;
-    const lastEvName = events[events.length - 1].event || "";
-    if (/Auto/i.test(lastEvName)) meta.mode = "Auto";
-    else if (/Manual/i.test(lastEvName)) meta.mode = "Manual";
-    else if (/Off/i.test(lastEvName)) meta.mode = "Off";
-    else meta.mode = "Auto";
+    const sorted = [...events].sort((a, b) => new Date(a.dt) - new Date(b.dt));
+    meta.pressure = `${sorted[sorted.length - 1].psi} psi`;
+    let foundMode = "Auto";
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const ev = String(sorted[i].event || "").trim();
+      if (/Main\s*Switch/i.test(ev)) {
+        if (/Auto/i.test(ev)) { foundMode = "Auto"; break; }
+        else if (/Manual/i.test(ev)) { foundMode = "Manual"; break; }
+        else if (/Off/i.test(ev)) { foundMode = "Off"; break; }
+      }
+    }
+    meta.mode = foundMode || "Auto";
   }
 
   const dedupedEvents = deduplicateEvents(events);
@@ -5055,7 +5061,11 @@ window.addEventListener("DOMContentLoaded", async () => {
       CURRENT_EVENTS = deduplicateEvents(stored);
       try {
         const savedMeta = JSON.parse(localStorage.getItem("ai_fpas_log_summary") || "null");
-        if (savedMeta) Object.assign(DEFAULT_LOG_SUMMARY, savedMeta);
+        if (savedMeta) {
+          if (savedMeta.mode === "Off") savedMeta.mode = "Auto";
+          Object.assign(DEFAULT_LOG_SUMMARY, savedMeta);
+          try { localStorage.setItem("ai_fpas_log_summary", JSON.stringify(DEFAULT_LOG_SUMMARY)); } catch (_) {}
+        }
       } catch (_) {}
       const lastFile = localStorage.getItem("firetrol_last_file") || "12.11.2569.TXT";
       const hdrFn = document.getElementById("hdrFileName");
@@ -5339,7 +5349,24 @@ function syncMetadataUIToCurrentSummary(events) {
   setTxt("simDataB1", b1V);
   setTxt("simDataB2", b2V);
 
-  const modeStr = hasEvents ? (sum.mode && sum.mode !== "-" ? sum.mode : "Auto") : "-";
+  let modeStr = "-";
+  if (hasEvents) {
+    let foundMode = null;
+    const evList = (Array.isArray(events) && events.length > 0) ? events : (Array.isArray(CURRENT_EVENTS) ? CURRENT_EVENTS : []);
+    if (evList.length > 0) {
+      const sorted = [...evList].sort((a, b) => new Date(a.dt) - new Date(b.dt));
+      for (let i = sorted.length - 1; i >= 0; i--) {
+        const ev = String(sorted[i].event || "").trim();
+        if (/Main\s*Switch/i.test(ev)) {
+          if (/Auto/i.test(ev)) { foundMode = "Auto"; break; }
+          else if (/Manual/i.test(ev)) { foundMode = "Manual"; break; }
+          else if (/Off/i.test(ev)) { foundMode = "Off"; break; }
+        }
+      }
+    }
+    modeStr = foundMode || "Auto";
+    if (sum) { sum.mode = modeStr; try { localStorage.setItem("ai_fpas_log_summary", JSON.stringify(sum)); } catch (_) {} }
+  }
   setTxt("hudModeVal", modeStr);
   setTxt("simDataMode", modeStr);
   setTxt("kpiSystemMode", modeStr);
@@ -5593,7 +5620,7 @@ function renderRunHistoryModal(eventsList) {
   const crankStats = analyzeCrankAndRunSessions(eventsList);
 
   const pTotal = document.getElementById("modalPumpTotal");
-  if (pTotal) pTotal.textContent = (DEFAULT_LOG_SUMMARY && DEFAULT_LOG_SUMMARY.pump_total && DEFAULT_LOG_SUMMARY.pump_total !== "0:00") ? DEFAULT_LOG_SUMMARY.pump_total : "90:30";
+  if (pTotal) pTotal.textContent = (DEFAULT_LOG_SUMMARY && DEFAULT_LOG_SUMMARY.pump_total && DEFAULT_LOG_SUMMARY.pump_total !== "0:00") ? DEFAULT_LOG_SUMMARY.pump_total : "89:50";
 
   const pLastC1 = document.getElementById("modalLastCrank1");
   const pLastC1Sub = document.getElementById("modalLastCrank1Sub");
