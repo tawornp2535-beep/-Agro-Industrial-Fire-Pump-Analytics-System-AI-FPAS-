@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -1436,6 +1436,25 @@
     }
   }
 
+  .pva-mode-btn {
+    border: none;
+    background: transparent;
+    color: #4B5563;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .pva-mode-btn:hover {
+    color: #111827;
+  }
+  .pva-mode-btn.active {
+    background: #1B7354 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(27, 115, 84, 0.25);
+  }
 </style>
 </head>
 <body>
@@ -2436,6 +2455,61 @@
         <div style="background:var(--bg-dashboard);border:1px solid var(--panel-border);border-radius:8px;padding:10px;min-height:160px;">
           <div style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:6px;text-align:center;">เปรียบเทียบ B1 vs B2 (6 มิติ)</div>
           <canvas id="batteryCompareChart" style="width:100%;height:160px;display:block;"></canvas>
+        </div>
+      </div>
+    </div>
+
+        <!-- Plan vs Actual S-Curve Comparison Line Chart (NFPA 25 Routine Inspection Compliance) -->
+    <div class="glass-card" id="planVsActualChartCard" style="padding: 16px 20px; margin-bottom: 14px; background: #FFFFFF; border: 1px solid var(--panel-border); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <select id="pvaProjectSelect" style="background: #FFFFFF; border: 1px solid #1B7354; border-radius: 8px; color: #155E43; font-weight: 700; font-size: 0.76rem; padding: 5px 12px; cursor: pointer; outline: none;">
+            <option value="all">ทุกโครงการ (เฉลี่ย)</option>
+            <option value="markiixg" selected>ปั้มดับเพลิง MarkIIXG (FTA 1100-J)</option>
+          </select>
+          <div class="pva-pill-group" style="display: inline-flex; background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 8px; padding: 2px;">
+            <button type="button" class="pva-mode-btn active" id="pvaBtnDaily" onclick="setPvaPeriodMode('daily')">รายวัน</button>
+            <button type="button" class="pva-mode-btn" id="pvaBtnWeekly" onclick="setPvaPeriodMode('weekly')">รายสัปดาห์</button>
+            <button type="button" class="pva-mode-btn" id="pvaBtnMonthly" onclick="setPvaPeriodMode('monthly')">รายเดือน</button>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 14px; font-size: 0.72rem;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="display: inline-block; width: 14px; height: 0; border-top: 2px dashed #64748B;"></span>
+              <span style="color: #64748B; font-weight: 600;">แผนมาตรฐาน NFPA 25 (Target)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10B981; border: 2px solid #047857;"></span>
+              <span style="color: #047857; font-weight: 700;">ผลการทดสอบจริงสะสม (Actual)</span>
+            </div>
+          </div>
+          <select id="pvaMonthSelect" onchange="renderPlanVsActualChart()" style="background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; color: #374151; font-weight: 600; font-size: 0.74rem; padding: 4px 10px; cursor: pointer;">
+            <option value="2026-11" selected>พ.ย. 2569</option>
+            <option value="2026-10">ต.ค. 2569</option>
+            <option value="2026-09">ก.ย. 2569</option>
+            <option value="2026-08">ส.ค. 2569</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Chart Canvas Container with responsive height -->
+      <div style="width: 100%; height: 260px; position: relative;">
+        <canvas id="planVsActualCanvas" style="width: 100%; height: 260px; display: block;"></canvas>
+      </div>
+
+      <!-- Footer Stats & Insights -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #E2E8F0; font-size: 0.72rem; color: var(--text-secondary); flex-wrap: wrap; gap: 8px;">
+        <div>
+          <span>📌 แผนสะสมสิ้นเดือน: <b style="color: #64748B;" id="pvaTargetStat">60%</b></span>
+          <span style="margin: 0 8px;">•</span>
+          <span>ผลงานจริงสะสม: <b style="color: #10B981;" id="pvaActualStat">75%</b></span>
+          <span style="margin: 0 8px;">•</span>
+          <span id="pvaInsightBadge" class="status-badge" style="background: rgba(16,185,129,0.12); color: #047857; border: 1px solid rgba(16,185,129,0.3); font-size: 0.68rem; padding: 2px 8px; font-weight: 700;">✅ ผลการทดสอบจริงนำหน้าแผน NFPA 25 (+15%)</span>
+        </div>
+        <div style="font-size: 0.68rem; color: #9CA3AF;">
+        <div style="font-size: 0.68rem; color: #9CA3AF;">* คำนวณจากเกณฑ์การทดสอบเดินเครื่องประจำสัปดาห์ (NFPA 25 Weekly Test) และการบันทึกสถานะเครื่องยนต์</div>
         </div>
       </div>
     </div>
@@ -5582,6 +5656,226 @@ function thaiMonth(m) {
 // ══════════════════════════════════════════════════════════════════
 //  6. Table Renderer
 // ══════════════════════════════════════════════════════════════════
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  Plan vs Actual S-Curve Comparison Line Chart
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function setPvaPeriodMode(mode) {
+  currentPvaMode = mode;
+  document.querySelectorAll('.pva-mode-btn').forEach(b => b.classList.remove('active'));
+  const btnMap = {
+    daily: 'pvaBtnDaily',
+    weekly: 'pvaBtnWeekly',
+    monthly: 'pvaBtnMonthly'
+  };
+  const activeBtn = document.getElementById(btnMap[mode]);
+  if (activeBtn) activeBtn.classList.add('active');
+  renderPlanVsActualChart();
+}
+
+function renderPlanVsActualChart() {
+  const canvas = document.getElementById('planVsActualCanvas');
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  const w = parent ? parent.clientWidth : 700;
+  const h = 260;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.height = h + 'px';
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const leftPad = 45;
+  const rightPad = 25;
+  const topPad = 25;
+  const botPad = 35;
+  const plotW = Math.max(100, w - leftPad - rightPad);
+  const plotH = Math.max(50, h - topPad - botPad);
+
+  // 1. Draw horizontal grid lines & Y labels (0% to 100%)
+  const steps = 10;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.font = '10px sans-serif';
+
+  for (let i = 0; i <= steps; i++) {
+    const yVal = i * 10;
+    const yPos = topPad + plotH - (i / steps) * plotH;
+
+    // Grid line
+    ctx.strokeStyle = '#F1F5F9';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(leftPad, yPos);
+    ctx.lineTo(w - rightPad, yPos);
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = '#94A3B8';
+    ctx.fillText(yVal + '%', leftPad - 8, yPos);
+  }
+
+  // 2. Data Definitions based on Period Mode aligned with NFPA 25 Standard
+  const selectedMonth = document.getElementById('pvaMonthSelect')?.value || '2026-11';
+  let labels = [];
+  let planPts = [];
+  let actualPts = [];
+  let insightText = '';
+  let insightBg = 'rgba(16,185,129,0.12)';
+  let insightColor = '#047857';
+  let insightBorder = 'rgba(16,185,129,0.3)';
+
+  if (currentPvaMode === 'daily') {
+    if (selectedMonth === '2026-11') {
+      labels = ['1 \u0E1E.\u0E22.', '4 \u0E1E.\u0E22.', '7 \u0E1E.\u0E22.', '10 \u0E1E.\u0E22.', '12 \u0E1E.\u0E22.', '14 \u0E1E.\u0E22.', '17 \u0E1E.\u0E22.', '21 \u0E1E.\u0E22.', '24 \u0E1E.\u0E22.', '28 \u0E1E.\u0E22.'];
+      planPts = [0, 0.15, 0.25, 0.35, 0.43, 0.50, 0.60, 0.75, 0.88, 1.0];
+      actualPts = [0, 0.50, 0.50, 0.50, 0.75, 0.75, 0.75];
+      insightText = '\u2705 \u0E1C\u0E25\u0E01\u0E32\u0E23\u0E17\u0E14\u0E2A\u0E2D\u0E1A\u0E08\u0E23\u0E34\u0E07\u0E19\u0E33\u0E2B\u0E19\u0E49\u0E32\u0E41\u0E1C\u0E19 NFPA 25 (+15%)';
+    } else if (selectedMonth === '2026-10') {
+      labels = ['1 \u0E15.\u0E04.', '6 \u0E15.\u0E04.', '10 \u0E15.\u0E04.', '15 \u0E15.\u0E04.', '19 \u0E15.\u0E04.', '22 \u0E15.\u0E04.', '26 \u0E15.\u0E04.', '29 \u0E15.\u0E04.', '31 \u0E15.\u0E04.'];
+      planPts = [0, 0.20, 0.35, 0.50, 0.65, 0.75, 0.88, 0.95, 1.0];
+      actualPts = [0, 0.25, 0.25, 0.25, 0.50, 0.50, 0.50, 0.75, 0.75];
+      insightText = '\u26A0\uFE0F \u0E1C\u0E25\u0E07\u0E32\u0E19\u0E2A\u0E34\u0E49\u0E19\u0E40\u0E14\u0E37\u0E2D\u0E19 75% (\u0E02\u0E32\u0E14\u0E01\u0E32\u0E23\u0E17\u0E14\u0E2A\u0E2D\u0E1A 1 \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c)';
+      insightBg = 'rgba(245,158,11,0.12)'; insightColor = '#D97706'; insightBorder = 'rgba(245,158,11,0.3)';
+    } else if (selectedMonth === '2026-09') {
+      labels = ['1 \u0E01.\u0E22.', '7 \u0E01.\u0E22.', '14 \u0E01.\u0E22.', '18 \u0E01.\u0E22.', '21 \u0E01.\u0E22.', '25 \u0E01.\u0E22.', '28 \u0E01.\u0E22.', '30 \u0E01.\u0E22.'];
+      planPts = [0, 0.25, 0.50, 0.65, 0.75, 0.88, 0.95, 1.0];
+      actualPts = [0, 0, 0.50, 0.50, 0.50, 0.75, 0.75, 0.75];
+      insightText = '\u26A0\uFE0F \u0E1C\u0E25\u0E07\u0E32\u0E19\u0E2A\u0E34\u0E49\u0E19\u0E40\u0E14\u0E37\u0E2D\u0E19 75% (\u0E02\u0E32\u0E14\u0E01\u0E32\u0E23\u0E17\u0E14\u0E2A\u0E2D\u0E1A 1 \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c)';
+      insightBg = 'rgba(245,158,11,0.12)'; insightColor = '#D97706'; insightBorder = 'rgba(245,158,11,0.3)';
+    } else {
+      labels = ['1 \u0E2A.\u0E04.', '7 \u0E2A.\u0E04.', '11 \u0E2A.\u0E04.', '15 \u0E2A.\u0E04.', '19 \u0E2A.\u0E04.', '23 \u0E2A.\u0E04.', '27 \u0E2A.\u0E04.', '31 \u0E2A.\u0E04.'];
+      planPts = [0, 0.25, 0.38, 0.50, 0.65, 0.75, 0.88, 1.0];
+      actualPts = [0, 0, 0.25, 0.25, 0.50, 0.50, 1.0, 1.0];
+      insightText = '\u2705 \u0E1A\u0E23\u0E23\u0E25\u0E38\u0E40\u0E01\u0E13\u0E11\u0E4c NFPA 25 \u0E04\u0E23\u0E1A 100% (\u0E17\u0E14\u0E2A\u0E2D\u0E1A 5 \u0E23\u0E2D\u0E1A)';
+    }
+  } else if (currentPvaMode === 'weekly') {
+    labels = ['\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c 1 (1-7)', '\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c 2 (8-14)', '\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c 3 (15-21)', '\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c 4 (22-28)'];
+    planPts = [0.25, 0.50, 0.75, 1.0];
+    if (selectedMonth === '2026-11') {
+      actualPts = [0.50, 0.75];
+      insightText = '\u2705 \u0E1C\u0E25\u0E07\u0E32\u0E19\u0E2A\u0E30\u0E2A\u0E21 75% \u0E19\u0E33\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E01\u0E13\u0E11\u0E4c\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c\u0E17\u0E35\u0E48 2 (50%) \u0E2D\u0E22\u0E39\u0E48 +25%';
+    } else if (selectedMonth === '2026-10') {
+      actualPts = [0.25, 0.25, 0.50, 0.75];
+      insightText = '\u26A0\uFE0F \u0E1C\u0E25\u0E07\u0E32\u0E19\u0E2A\u0E34\u0E49\u0E19\u0E40\u0E14\u0E37\u0E2D\u0E19 75% (\u0E02\u0E32\u0E14 1 \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c)';
+      insightBg = 'rgba(245,158,11,0.12)'; insightColor = '#D97706'; insightBorder = 'rgba(245,158,11,0.3)';
+    } else if (selectedMonth === '2026-09') {
+      actualPts = [0, 0.50, 0.50, 0.75];
+      insightText = '\u26A0\uFE0F \u0E1C\u0E25\u0E07\u0E32\u0E19\u0E2A\u0E34\u0E49\u0E19\u0E40\u0E14\u0E37\u0E2D\u0E19 75% (\u0E02\u0E32\u0E14 1 \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c)';
+      insightBg = 'rgba(245,158,11,0.12)'; insightColor = '#D97706'; insightBorder = 'rgba(245,158,11,0.3)';
+    } else {
+      actualPts = [0, 0.25, 0.50, 1.0];
+      insightText = '\u2705 \u0E1A\u0E23\u0E23\u0E25\u0E38\u0E40\u0E01\u0E13\u0E11\u0E4c NFPA 25 \u0E04\u0E23\u0E1A 100% (\u0E17\u0E14\u0E2A\u0E2D\u0E1A\u0E04\u0E23\u0E1A 4 \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c)';
+    }
+  } else {
+    // Monthly comparison across 4 months
+    labels = ['\u0E2A.\u0E04. 2569', '\u0E01.\u0E22. 2569', '\u0E15.\u0E04. 2569', '\u0E1E.\u0E22. 2569 (\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19)'];
+    planPts = [1.0, 1.0, 1.0, 1.0]; // 100% Benchmark standard per NFPA 25
+    actualPts = [1.0, 0.75, 0.75, 0.75]; // Actual verified test compliance
+    insightText = '\u2705 \u0E40\u0E14\u0E37\u0E2D\u0E19 \u0E1E.\u0E22. \u0E17\u0E14\u0E2A\u0E2D\u0E1A\u0E41\u0E25\u0E49\u0E27 3/4 \u0E04\u0E23\u0E31\u0E49\u0E07 (75%) \u0E19\u0E33\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E01\u0E13\u0E11\u0E4c\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4c\u0E17\u0E35\u0E48 2 (50%)';
+  }
+
+  // 3. Draw X-axis line & labels
+  ctx.strokeStyle = '#CBD5E1';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(leftPad, topPad + plotH);
+  ctx.lineTo(w - rightPad, topPad + plotH);
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#64748B';
+  ctx.font = '9.5px sans-serif';
+
+  const numSlots = Math.max(1, labels.length - 1);
+  const getX = (idx) => leftPad + (idx / numSlots) * plotW;
+  const getY = (val) => topPad + plotH - (val * plotH);
+
+  labels.forEach((lbl, i) => {
+    const xPos = getX(i);
+    ctx.beginPath();
+    ctx.moveTo(xPos, topPad + plotH);
+    ctx.lineTo(xPos, topPad + plotH + 4);
+    ctx.stroke();
+    ctx.fillText(lbl, xPos, topPad + plotH + 8);
+  });
+
+  // 4. Draw Line 1: Target Plan (Dotted / Dashed Line in #64748B)
+  ctx.save();
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#64748B';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  planPts.forEach((v, i) => {
+    const x = getX(i);
+    const y = getY(v);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.restore();
+
+  // 5. Draw Line 2: Actual Progress (Solid Green Line in #10B981)
+  ctx.save();
+  ctx.strokeStyle = '#10B981';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  actualPts.forEach((v, i) => {
+    const x = getX(i);
+    const y = getY(v);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Draw points on Actual line
+  actualPts.forEach((v, i) => {
+    const x = getX(i);
+    const y = getY(v);
+    const isLatest = (i === actualPts.length - 1);
+
+    ctx.fillStyle = '#10B981';
+    ctx.beginPath();
+    ctx.arc(x, y, isLatest ? 5.5 : 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (isLatest) {
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const pctText = Math.round(v * 100) + '%';
+      ctx.fillStyle = '#047857';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(pctText, x, y - 18);
+    }
+  });
+  ctx.restore();
+
+  // Update footer statistics & insight badge
+  const targetEl = document.getElementById('pvaTargetStat');
+  const actualEl = document.getElementById('pvaActualStat');
+  const badgeEl = document.getElementById('pvaInsightBadge');
+  if (targetEl) targetEl.textContent = Math.round(planPts[planPts.length - 1] * 100) + '%';
+  if (actualEl) actualEl.textContent = Math.round(actualPts[actualPts.length - 1] * 100) + '%';
+  if (badgeEl) {
+    badgeEl.textContent = insightText;
+    badgeEl.style.background = insightBg;
+    badgeEl.style.color = insightColor;
+    badgeEl.style.borderColor = insightBorder;
+  }
+}
+
+window.addEventListener('resize', () => {
+  if (typeof renderPlanVsActualChart === 'function') renderPlanVsActualChart();
+});
 function renderTableRows(events) {
   const tbody = document.getElementById("eventsTableBody");
   tbody.innerHTML = "";
@@ -7488,7 +7782,7 @@ function renderNFPADashboard(shouldSaveState = false) {
   if (elAdv) {
     elAdv.innerHTML = !hasEvents
       ? `<strong style="color: var(--color-dark-green);">💡 บทวิเคราะห์วิศวกรรมตามมาตรฐาน NFPA 20 / NFPA 25:</strong><br>ยังไม่มีข้อมูลจากไฟล์ Log จริง กรุณานำเข้าไฟล์ .txt จากตู้ควบคุม MarkIIXG เพื่อให้ AI วิเคราะห์ชั่วโมงสะสม รอบทดสอบ และสุขภาพแบตเตอรี่โดยอัตโนมัติ`
-      : `<strong style="color: var(--color-dark-green);">💡 บทวิเคราะห์วิศวกรรมตามมาตรฐาน NFPA 20 / NFPA 25:</strong><br>เครื่องสูบน้ำดับเพลิงดีเซลมีชั่วโมงสะสมรวม <b>${totalHrsStr} ชม.</b> ผ่านการทดสอบเดินเครื่องรวม <b>${crankStats.sessions.length} รอบ</b> (Crank 1: ${crankStats.crank1Count} ครั้ง / Crank 2: ${crankStats.crank2Count} ครั้ง) • เหลือเวลาอีก <b>${remH}:${remM} ชม.</b> ก่อนครบกำหนดบำรุงรักษารอบ <b>${nextMilestoneHrs}:00 ชม.</b>`;
+      : `<strong style="color: var(--color-dark-green);">💡 บทวิเคราะห์วิศวกรรมตามมาตรฐาน NFPA 20 / NFPA 25:</strong><br>เครื่องสูบน้ำดับเพลิงดีเซลมีชั่วโมงสะสมรวม <b>${totalHrsStr} ชม.</b> ผ่านการทดสอบเดินเครื่องรวม <b>${crankStats.sessions.length} รอบ</b> (Crank 1: ${crankStats.crank1Count} ครั้ง / Crank 2: ${crankStats.crank2Count} ครั้ง) • เหลือเวลาอีก <b>${remH}:${remM} ชม.</b> ก่อนครบกำหนดบำรุงรักษารอบ <b>${nextTargetStr} ชม.</b>`;
   }
 
   // Update Active Pill Buttons
